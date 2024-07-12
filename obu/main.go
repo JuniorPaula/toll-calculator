@@ -1,19 +1,17 @@
 package main
 
 import (
-  "fmt"
+  "log"
   "time"
   "math/rand"
   "math"
+  "tolling/types"
+
+  "github.com/gorilla/websocket"
 )
 
+const wsEndpoint = "ws://127.0.0.1:3000/ws"
 var sendInterval = time.Second
-
-type OBUData struct {
-  OBUID   int       `json:"obu_id"`
-  Lat     float64   `json:"lat"`
-  Long    float64   `json:"long"`
-}
 
 func genLatLong() (float64, float64) {
   return genCoord(), genCoord()
@@ -35,15 +33,22 @@ func generateOBUIDs(n int) []int {
 
 func main() {
   obuIDs := generateOBUIDs(20)
+  wsConn, _, err := websocket.DefaultDialer.Dial(wsEndpoint, nil)
+  if err != nil {
+    log.Fatalf("Could not connect with Socket: %v\n", err)
+  }
+
   for {
     for i := 0; i < len(obuIDs); i++ {
       lat, long := genLatLong()
-      data := OBUData{
+      data := types.OBUData{
         OBUID: obuIDs[i],
         Lat: lat,
         Long: long,
       }
-      fmt.Printf("%+v\n", data)
+      if err := wsConn.WriteJSON(data); err != nil {
+        log.Fatalf("Could not write json: %v\n", err)
+      }
     }
     time.Sleep(sendInterval)
   }
