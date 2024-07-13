@@ -3,7 +3,7 @@ obu:
 		  @./bin/obu
 
 receive:
-	    @go build -o bin/receive data_receive/main.go
+	    @go build -o bin/receive data_receive/*.go
 	    @./bin/receive
 
 .PHONY:	obu
