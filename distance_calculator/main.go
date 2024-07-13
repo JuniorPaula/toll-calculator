@@ -9,7 +9,14 @@ import "log"
 var kafkaTopic = "obudata"
 
 func main() {
-	kc, err := NewKafkaConsumer(kafkaTopic)
+	var (
+		err error
+		svc CalculatorServicer
+	)
+
+	svc = NewCalculatorService()
+
+	kc, err := NewKafkaConsumer(kafkaTopic, svc)
 	if err != nil {
 		log.Fatal(err)
 	}

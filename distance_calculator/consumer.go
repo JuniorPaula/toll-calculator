@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"tolling/types"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/sirupsen/logrus"
@@ -10,9 +12,10 @@ import (
 type KafkaConsumer struct {
 	consumer  *kafka.Consumer
 	isRunning bool
+	service   CalculatorServicer
 }
 
-func NewKafkaConsumer(topic string) (*KafkaConsumer, error) {
+func NewKafkaConsumer(topic string, svc CalculatorServicer) (*KafkaConsumer, error) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost",
 		"group.id":          "myGroup",
@@ -26,6 +29,7 @@ func NewKafkaConsumer(topic string) (*KafkaConsumer, error) {
 	c.SubscribeTopics([]string{topic}, nil)
 	return &KafkaConsumer{
 		consumer: c,
+		service:  svc,
 	}, nil
 }
 
@@ -42,6 +46,23 @@ func (kc *KafkaConsumer) readMessagesLoop() {
 			logrus.Errorf("Kafka consumer error: %v", err)
 			continue
 		}
-		fmt.Println(string(msg.Value))
+
+		var data types.OBUData
+		if err := json.Unmarshal(msg.Value, &data); err != nil {
+			logrus.Errorf("Error unmarshalling OBUData: %v", err)
+			continue
+		}
+
+		distance, err := kc.service.CalculateDistance(data)
+		if err != nil {
+			logrus.Errorf("Error calculating distance: %v", err)
+			continue
+		}
+		logrus.WithFields(logrus.Fields{
+			"obu_id": data.OBUID,
+			"lat":    data.Lat,
+			"long":   data.Long,
+			"dist":   fmt.Sprintf("%.2f", distance),
+		}).Info("Distance calculated")
 	}
 }
