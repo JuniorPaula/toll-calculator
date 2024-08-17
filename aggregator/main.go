@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	listenAddr := flag.String("listenaddr", ":3000", "the listen address of HTTP server")
+	listenAddr := flag.String("listenaddr", ":4000", "the listen address of HTTP server")
 	flag.Parse()
 
 	var (

@@ -1,12 +1,14 @@
 package main
 
-import "log"
+import (
+	"log"
+	"tolling/aggregator/client"
+)
 
-// type DistanceCalculator struct {
-// 	consumer DataConsumer
-// }
-
-var kafkaTopic = "obudata"
+const (
+	kafkaTopic         = "obudata"
+	aggregatorEndpoint = "http://127.0.0.1:4000/aggregate"
+)
 
 func main() {
 	var (
@@ -17,7 +19,7 @@ func main() {
 	svc = NewCalculatorService()
 	svc = NewLogMiddleware(svc)
 
-	kc, err := NewKafkaConsumer(kafkaTopic, svc)
+	kc, err := NewKafkaConsumer(kafkaTopic, svc, client.NewClient(aggregatorEndpoint))
 	if err != nil {
 		log.Fatal(err)
 	}
