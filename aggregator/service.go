@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"tolling/types"
 )
 
@@ -24,6 +23,5 @@ func NewInvoicerAggregator(store Storer) Aggregator {
 }
 
 func (i *InvoiceAggregator) AggregateDistance(distance types.Distance) error {
-	fmt.Println("processing and inserting distance in the storage: ", distance)
 	return i.store.Insert(distance)
 }
