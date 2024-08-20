@@ -1,5 +1,11 @@
 package types
 
+type Invoice struct {
+	OBUID         int     `json:"obu_id"`
+	TotalDistance float64 `json:"total_distance"`
+	TotalAmount   float64 `json:"total_amount"`
+}
+
 type Distance struct {
 	Value float64 `json:"value"`
 	OBUID int     `json:"obu_id"`
