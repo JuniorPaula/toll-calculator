@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"tolling/types"
+
+	"google.golang.org/grpc"
 )
 
 func main() {
-	listenAddr := flag.String("listenaddr", ":4000", "the listen address of HTTP server")
+	httpAddr := flag.String("httpAddr", ":4000", "the listen address of HTTP server")
+	rpcAddr := flag.String("rpcAddr", ":4001", "the listen address of HTTP server")
 	flag.Parse()
 
 	var (
@@ -19,7 +23,22 @@ func main() {
 	)
 
 	svc = NewLogMiddleware(svc)
-	makeHTTPTransport(*listenAddr, svc)
+	go makeGRPCTransport(*rpcAddr, svc)
+	makeHTTPTransport(*httpAddr, svc)
+}
+
+func makeGRPCTransport(listenAddr string, svc Aggregator) error {
+	fmt.Printf("[RPC] transport running on port (:%s)\n", listenAddr)
+	ln, err := net.Listen("TCP", listenAddr)
+	if err != nil {
+		return err
+	}
+	defer ln.Close()
+
+	server := grpc.NewServer([]grpc.ServerOption{}...)
+
+	types.RegisterAggregatorServer(server, NewGRPCAggregatorServer(svc))
+	return server.Serve(ln)
 }
 
 func makeHTTPTransport(addr string, svc Aggregator) {
