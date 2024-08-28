@@ -8,15 +8,15 @@ import (
 	"tolling/types"
 )
 
-type Client struct {
+type HTTPClient struct {
 	Endpoint string
 }
 
-func NewClient(endpoint string) *Client {
-	return &Client{Endpoint: endpoint}
+func NewClient(endpoint string) *HTTPClient {
+	return &HTTPClient{Endpoint: endpoint}
 }
 
-func (c *Client) AggregateInvoice(distance types.Distance) error {
+func (c *HTTPClient) AggregateInvoice(distance types.Distance) error {
 	b, err := json.Marshal(distance)
 	if err != nil {
 		return err
