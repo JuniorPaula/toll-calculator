@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"tolling/types"
 
 	"google.golang.org/grpc"
@@ -9,7 +10,7 @@ import (
 
 type GRPClient struct {
 	Endpoint string
-	types.AggregatorClient
+	client   types.AggregatorClient
 }
 
 func NewGRPClient(endpoint string) (*GRPClient, error) {
@@ -20,7 +21,12 @@ func NewGRPClient(endpoint string) (*GRPClient, error) {
 	c := types.NewAggregatorClient(conn)
 
 	return &GRPClient{
-		Endpoint:         endpoint,
-		AggregatorClient: c,
+		Endpoint: endpoint,
+		client:   c,
 	}, nil
+}
+
+func (c *GRPClient) Aggregate(ctx context.Context, req *types.AggregateRequest) error {
+	_, err := c.client.Aggregate(ctx, req)
+	return err
 }
