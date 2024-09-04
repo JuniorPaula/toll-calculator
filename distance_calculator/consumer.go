@@ -73,7 +73,7 @@ func (kc *KafkaConsumer) readMessagesLoop() {
 		req := &types.AggregateRequest{
 			Value: distance,
 			Unix:  time.Now().Unix(),
-			ObuiD: int32(data.OBUID),
+			ObuID: int32(data.OBUID),
 		}
 
 		if err := kc.aggrClient.Aggregate(context.Background(), req); err != nil {
