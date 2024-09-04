@@ -15,7 +15,7 @@ import (
 
 func main() {
 	httpAddr := flag.String("httpAddr", ":4000", "the listen address of HTTP server")
-	rpcAddr := flag.String("rpcAddr", ":4001", "the listen address of HTTP server")
+	rpcAddr := flag.String("rpcAddr", ":4001", "the listen address of gRPC server")
 	flag.Parse()
 
 	var (
