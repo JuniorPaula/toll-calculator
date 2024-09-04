@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"tolling/types"
-
-	"github.com/sirupsen/logrus"
 )
 
 type HTTPClient struct {
@@ -29,8 +27,6 @@ func (c *HTTPClient) GetInvoice(ctx context.Context, id int) (*types.Invoice, er
 	}
 
 	endpoint := fmt.Sprintf("%s/invoice?obu=%d", c.Endpoint, id)
-	logrus.Info("requesting get invoice -> ", endpoint)
-
 	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(b))
 	if err != nil {
 		return nil, err
