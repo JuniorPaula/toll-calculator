@@ -2,25 +2,29 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"tolling/types"
 
+	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	httpAddr := flag.String("httpAddr", ":4000", "the listen address of HTTP server")
-	rpcAddr := flag.String("rpcAddr", ":4001", "the listen address of gRPC server")
-	flag.Parse()
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error loading .env file %v", err)
+	}
+
+	httpAddr := os.Getenv("AGG_HTTP_ENDPOINT")
+	rpcAddr := os.Getenv("AGG_GRPC_ENDPOINT")
 
 	var (
-		store = NewMemoryStore()
+		store = makeStore()
 		svc   = NewInvoicerAggregator(store)
 	)
 
@@ -28,14 +32,14 @@ func main() {
 	svc = NewLogMiddleware(svc)
 
 	// start GRPC transport for an goroutine
-	go func() { makeGRPCTransport(*rpcAddr, svc) }()
+	go func() { makeGRPCTransport(fmt.Sprintf(":%s", rpcAddr), svc) }()
 
 	// start HTTP transport an main goroutine
-	log.Fatal(makeHTTPTransport(*httpAddr, svc))
+	log.Fatal(makeHTTPTransport(fmt.Sprintf(":%s", httpAddr), svc))
 }
 
 func makeGRPCTransport(listenAddr string, svc Aggregator) error {
-	fmt.Printf("[RPC] transport running on port (:%s)\n", listenAddr)
+	fmt.Printf("[RPC] transport running on port (%s)\n", listenAddr)
 	ln, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return err
@@ -49,7 +53,7 @@ func makeGRPCTransport(listenAddr string, svc Aggregator) error {
 }
 
 func makeHTTPTransport(addr string, svc Aggregator) error {
-	fmt.Printf("[HTTP] transport running on port (:%s)\n", addr)
+	fmt.Printf("[HTTP] transport running on port (%s)\n", addr)
 	http.HandleFunc("/aggregate", handleAggregate(svc))
 	http.HandleFunc("/invoice", handleGetInvoice(svc))
 
@@ -61,6 +65,11 @@ func makeHTTPTransport(addr string, svc Aggregator) error {
 
 func handleGetInvoice(svc Aggregator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not supported"})
+			return
+		}
+
 		q, ok := r.URL.Query()["obu"]
 		if !ok {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing OBU ID"})
@@ -86,7 +95,7 @@ func handleGetInvoice(svc Aggregator) http.HandlerFunc {
 func handleAggregate(svc Aggregator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not supported"})
 			return
 		}
 

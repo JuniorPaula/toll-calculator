@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"tolling/types"
 )
 
@@ -12,6 +14,17 @@ type MemoryStore struct {
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		data: make(map[int]float64),
+	}
+}
+
+func makeStore() Storer {
+	storeType := os.Getenv("STORE_TYPE")
+	switch storeType {
+	case "memory":
+		return NewMemoryStore()
+	default:
+		log.Fatalf("store type not supported - %s", storeType)
+		return nil
 	}
 }
 
