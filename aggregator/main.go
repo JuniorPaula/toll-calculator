@@ -53,11 +53,15 @@ func makeGRPCTransport(listenAddr string, svc Aggregator) error {
 func makeHTTPTransport(addr string, svc Aggregator) error {
 	fmt.Printf("[HTTP] transport running on port (%s)\n", addr)
 
-	aggMetricHandler := newHTTPMetrictHandler("aggregate")
-	invMetricHandler := newHTTPMetrictHandler("invoice")
+	var (
+		aggMetricHandler  = newHTTPMetrictHandler("aggregate")
+		invMetricHandler  = newHTTPMetrictHandler("invoice")
+		invoiceHandler    = makeHTTPHandlerFunc(invMetricHandler.instrument(handleGetInvoice(svc)))
+		aggregatorHandler = makeHTTPHandlerFunc(aggMetricHandler.instrument(handleAggregate(svc)))
+	)
 
-	http.HandleFunc("/aggregate", aggMetricHandler.instrument(handleAggregate(svc)))
-	http.HandleFunc("/invoice", invMetricHandler.instrument(handleGetInvoice(svc)))
+	http.HandleFunc("/aggregate", aggregatorHandler)
+	http.HandleFunc("/invoice", invoiceHandler)
 
 	// prometheus metrics route
 	http.Handle("/metrics", promhttp.Handler())
