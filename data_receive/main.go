@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
+	"math/rand"
 	"net/http"
 
 	"tolling/types"
@@ -73,10 +75,10 @@ func (dr *DataReceive) wsReceiveLoop() {
 			log.Println("Erro READ JSON", err)
 			continue
 		}
+		data.RequestID = rand.Intn(math.MaxInt)
+
 		if err := dr.producerData(data); err != nil {
 			fmt.Println("Kafka producer error:", err)
 		}
-		//fmt.Printf("receive OBU data from [%d] :: <lat %.2f, long %.2f>\n", data.OBUID, data.Lat, data.Long)
-		// dr.msgChan <- data
 	}
 }

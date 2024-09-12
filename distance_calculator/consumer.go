@@ -54,7 +54,11 @@ func (kc *KafkaConsumer) readMessagesLoop() {
 
 		var data types.OBUData
 		if err := json.Unmarshal(msg.Value, &data); err != nil {
-			logrus.Errorf("Error unmarshalling OBUData: %v", err)
+			logrus.Errorf("Error unmarshalling OBU data: %v", err)
+			logrus.WithFields(logrus.Fields{
+				"error":      err,
+				"request_id": data.RequestID,
+			})
 			continue
 		}
 
